@@ -8,6 +8,9 @@
         android:label="check_in_point"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyBoYtnC1-et7znGEL089m93yQ-LmIWpapI"/>
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -25,9 +28,6 @@
               android:name="io.flutter.embedding.android.NormalTheme"
               android:resource="@style/NormalTheme"
               />
-            <meta-data
-                android:name="com.google.android.geo.API_KEY"
-                android:value="AIzaSyBoYtnC1-et7znGEL089m93yQ-LmIWpapI"/>
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>

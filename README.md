@@ -11,6 +11,13 @@ Firebase will act as the backend for user authentication and data storage. The a
 - `lib/screens/register_screen.dart`: Minimal, responsive registration UI.
 - `lib/screens/home_screen.dart`: Placeholder home after successful sign-in.
 - `lib/main.dart`: Initializes Firebase, wires up Providers, and routes based on auth state.
+  
+#### Check-in feature (new)
+- `lib/models/check_in_point.dart`: Model for a check-in point (lat, lng, radius, timestamps).
+- `lib/data/check_in_repository.dart`: Firestore persistence enforcing a single active check-in per user via `users/{uid}/checkins/active` doc.
+- `lib/providers/check_in_provider.dart`: `ChangeNotifier` exposing active check-in stream and save/clear actions.
+- `lib/screens/check_in_create_screen.dart`: Google Map UI to drop a pin, adjust radius, and save.
+  - Access from `HomeScreen` via the floating action button "Create check-in".
 
 ### Run prerequisites
 1. Ensure platform config is present:
@@ -36,6 +43,53 @@ Firebase will act as the backend for user authentication and data storage. The a
 - In Xcode, set iOS deployment target to match Flutter and Firebase SDK requirements (usually iOS 13+).
 - Confirm that `ios/Runner/Info.plist` contains network permissions as needed.
 
+### Google Maps setup
+- Android: API key is defined in `android/app/src/main/AndroidManifest.xml` under `com.google.android.geo.API_KEY`.
+- iOS: Add your Google Maps SDK for iOS API key in `AppDelegate.swift` (see below). Example:
+  ```swift
+  import GoogleMaps
+
+  @UIApplicationMain
+  class AppDelegate: FlutterAppDelegate {
+    override func application(
+      _ application: UIApplication,
+      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
+    ) -> Bool {
+      GMSServices.provideAPIKey("YOUR_IOS_MAPS_API_KEY")
+      GeneratedPluginRegistrant.register(with: self)
+      return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+    }
+  }
+  ```
+
+### Location permissions
+- Android: `ACCESS_FINE_LOCATION` and `ACCESS_COARSE_LOCATION` are declared. If you plan background geofencing, keep `ACCESS_BACKGROUND_LOCATION`.
+- iOS: Add the following to `ios/Runner/Info.plist`:
+  ```xml
+  <key>NSLocationWhenInUseUsageDescription</key>
+  <string>Your location is used to create check-in points.</string>
+  ```
+
+### Firestore data model and rules
+- Data path: `users/{uid}/checkins/active` (single document) with fields: `latitude` (double), `longitude` (double), `radiusMeters` (int), `active` (bool), `createdAt`, `updatedAt` (timestamps).
+- Suggested Firestore rules (tighten as needed):
+  ```
+  rules_version = '2';
+  service cloud.firestore {
+    match /databases/{database}/documents {
+      match /users/{uid}/checkins/active {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
+    }
+  }
+  ```
+
+### Creating a check-in
+1. Sign in.
+2. On `HomeScreen`, tap "Create check-in".
+3. Tap on the map to drop a pin, adjust the radius slider, tap "Save Check-in".
+4. This overwrites the single active check-in at `users/{uid}/checkins/active`.
+
 ### UI/UX
 - Minimalistic card-centered form
 - Responsive layout via `LayoutBuilder` and constrained width for tablets/desktops
@@ -44,3 +98,6 @@ Firebase will act as the backend for user authentication and data storage. The a
 ### Architecture
 - SOLID-friendly separation: UI → Provider → Repository → Firebase SDK
 - `provider` ensures existing features are unaffected and state is predictable
+
+### Compatibility notes
+- Packages used (`google_maps_flutter`, `cloud_firestore`, `firebase_core`, `firebase_auth`, `geolocator`, `provider`) are supported on both Android and iOS. For iOS, ensure CocoaPods is set up and Xcode 15+.

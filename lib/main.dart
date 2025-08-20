@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import 'package:check_in_point/firebase_options.dart';
 import 'package:check_in_point/data/auth_repository.dart';
 import 'package:check_in_point/providers/auth_provider.dart';
+import 'package:check_in_point/data/check_in_repository.dart';
+import 'package:check_in_point/providers/check_in_provider.dart';
 import 'package:check_in_point/screens/login_screen.dart';
 import 'package:check_in_point/screens/home_screen.dart';
 
@@ -25,6 +27,12 @@ class AppRoot extends StatelessWidget {
         ChangeNotifierProvider<AuthProvider>(
           create: (context) =>
               AuthProvider(authRepository: context.read<AuthRepository>()),
+        ),
+        Provider<CheckInRepository>(create: (_) => CheckInRepository()),
+        ChangeNotifierProvider<CheckInProvider>(
+          create: (context) => CheckInProvider(
+            repository: context.read<CheckInRepository>(),
+          ),
         ),
       ],
       child: SafeArea(

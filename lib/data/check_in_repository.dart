@@ -1,0 +1,67 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:check_in_point/models/check_in_point.dart';
+
+class CheckInRepository {
+  CheckInRepository({
+    FirebaseFirestore? firestore,
+    FirebaseAuth? firebaseAuth,
+  })  : _firestore = firestore ?? FirebaseFirestore.instance,
+        _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance;
+
+  final FirebaseFirestore _firestore;
+  final FirebaseAuth _firebaseAuth;
+
+  DocumentReference<Map<String, dynamic>> get _activePointDoc =>
+      _firestore.collection('checkin_point').doc('active');
+
+  Future<void> upsertActivePoint({
+    required double latitude,
+    required double longitude,
+    required int radiusMeters,
+  }) async {
+    final User? user = _firebaseAuth.currentUser;
+    if (user == null) {
+      throw StateError('Not authenticated');
+    }
+    final docRef = _activePointDoc;
+    await _firestore.runTransaction((transaction) async {
+      final snapshot = await transaction.get(docRef);
+      final now = FieldValue.serverTimestamp();
+      final data = <String, dynamic>{
+        'latitude': latitude,
+        'longitude': longitude,
+        'radiusMeters': radiusMeters,
+        'active': true,
+        'updatedAt': now,
+      };
+      if (snapshot.exists) {
+        transaction.update(docRef, data);
+      } else {
+        transaction.set(docRef, {
+          ...data,
+          'createdAt': now,
+        });
+      }
+    });
+  }
+
+  Future<void> clearActivePoint() async {
+    final User? user = _firebaseAuth.currentUser;
+    if (user == null) {
+      throw StateError('Not authenticated');
+    }
+    final docRef = _activePointDoc;
+    await docRef.delete();
+  }
+
+  Stream<CheckInPoint?> watchActivePoint() {
+    final User? user = _firebaseAuth.currentUser;
+    if (user == null) {
+      return const Stream<CheckInPoint?>.empty();
+    }
+    return _activePointDoc.snapshots().map((doc) => CheckInPoint.fromDoc(doc));
+  }
+}
+
+
