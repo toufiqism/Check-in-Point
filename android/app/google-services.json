@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "392680174220",
+    "project_id": "check-in-point-7afe0",
+    "storage_bucket": "check-in-point-7afe0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:392680174220:android:926096ee25ed7d7adb41a9",
+        "android_client_info": {
+          "package_name": "com.tofiq.check_in_point"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAMVK1n5ru9Whd--DRTA1p2Gemjd4A8140"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
