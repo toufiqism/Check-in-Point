@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:check_in_point/data/auth_repository.dart';
+import 'package:check_in_point/models/auth_action_result.dart';
 
 /// AuthProvider exposes authentication state and actions to the UI.
 /// It listens to FirebaseAuth's authStateChanges and notifies listeners
@@ -28,8 +29,10 @@ class AuthProvider extends ChangeNotifier {
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
 
-  Future<void> signIn({required String email, required String password}) async {
-    if (_isLoading) return;
+  Future<AuthActionResult> signIn({required String email, required String password}) async {
+    if (_isLoading) {
+      return AuthActionResult.failure('Please wait, another request is in progress.');
+    }
     _setLoading(true);
     _setError(null);
     try {
@@ -37,21 +40,26 @@ class AuthProvider extends ChangeNotifier {
         email: email,
         password: password,
       );
+      return AuthActionResult.success('Signed in successfully.');
     } on FirebaseAuthException catch (e) {
       _setError(_mapFirebaseAuthError(e));
+      return AuthActionResult.failure(_mapFirebaseAuthError(e));
     } catch (e) {
       _setError('Unexpected error. Please try again.');
+      return AuthActionResult.failure('Unexpected error. Please try again.');
     } finally {
       _setLoading(false);
     }
   }
 
-  Future<void> register({
+  Future<AuthActionResult> register({
     required String name,
     required String email,
     required String password,
   }) async {
-    if (_isLoading) return;
+    if (_isLoading) {
+      return AuthActionResult.failure('Please wait, another request is in progress.');
+    }
     _setLoading(true);
     _setError(null);
     try {
@@ -60,10 +68,13 @@ class AuthProvider extends ChangeNotifier {
         password: password,
       );
       await _authRepository.updateDisplayName(name);
+      return AuthActionResult.success('Account created successfully.');
     } on FirebaseAuthException catch (e) {
       _setError(_mapFirebaseAuthError(e));
+      return AuthActionResult.failure(_mapFirebaseAuthError(e));
     } catch (e) {
       _setError('Unexpected error. Please try again.');
+      return AuthActionResult.failure('Unexpected error. Please try again.');
     } finally {
       _setLoading(false);
     }

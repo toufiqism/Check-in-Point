@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:check_in_point/providers/auth_provider.dart';
+import 'package:check_in_point/utils/dialogs.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -31,11 +32,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   Future<void> _submit(AuthProvider authProvider) async {
     if (!_formKey.currentState!.validate()) return;
-    await authProvider.register(
+    final result = await authProvider.register(
       name: _nameController.text,
       email: _emailController.text,
       password: _passwordController.text,
     );
+    if (!mounted) return;
+    await showMessageDialog(
+      context: context,
+      title: result.success ? 'Success' : 'Registration failed',
+      message: result.message,
+    );
+    if (result.success && mounted) {
+      Navigator.of(context).popUntil((route) => route.isFirst);
+    }
   }
 
   @override
