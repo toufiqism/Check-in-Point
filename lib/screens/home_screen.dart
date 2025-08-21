@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:check_in_point/providers/auth_provider.dart';
+import 'package:check_in_point/screens/check_in_create_screen.dart';
+import 'package:check_in_point/screens/check_in_view_screen.dart';
+import 'package:provider/provider.dart';
+import 'package:check_in_point/providers/check_in_provider.dart';
+import 'package:check_in_point/utils/dialogs.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -21,16 +26,152 @@ class HomeScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.check_circle_outline, size: 72),
-            const SizedBox(height: 12),
-            Text('Signed in as ${userEmail ?? 'Anonymous'}'),
-          ],
-        ),
+      body: Consumer<CheckInProvider>(
+        builder: (context, checkInProvider, _) {
+          final active = checkInProvider.activePoint;
+          return ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              Card(
+                child: ListTile(
+                  leading: const Icon(Icons.person_outline),
+                  title: const Text('Signed in'),
+                  subtitle: Text(userEmail ?? 'Anonymous'),
+                ),
+              ),
+              const SizedBox(height: 12),
+              if (active != null)
+                Card(
+                  child: ListTile(
+                    leading: const Icon(Icons.my_location_outlined),
+                    title: const Text('Active check-in'),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Lat: ${active.latitude.toStringAsFixed(5)}, Lng: ${active.longitude.toStringAsFixed(5)}'),
+                        Text('Radius: ${active.radiusMeters} m'),
+                        const SizedBox(height: 4),
+                        StreamBuilder<int>(
+                          stream: context.read<CheckInProvider>().checkedInCount,
+                          builder: (context, snapshot) {
+                            final count = snapshot.data ?? 0;
+                            return Text('Checked-in now: $count');
+                          },
+                        ),
+                      ],
+                    ),
+                    isThreeLine: true,
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          tooltip: 'Check in',
+                          icon: const Icon(Icons.check_circle_outline),
+                          onPressed: () async {
+                            final result = await context.read<CheckInProvider>().attemptCheckIn();
+                            if (!context.mounted) return;
+                            await showMessageDialog(
+                              context: context,
+                              title: result.success ? 'Success' : 'Not in range',
+                              message: result.distanceMeters == null
+                                  ? result.message
+                                  : '${result.message}\nDistance: ${result.distanceMeters!.toStringAsFixed(1)} m',
+                            );
+                          },
+                        ),
+                        IconButton(
+                          tooltip: 'View',
+                          icon: const Icon(Icons.map_outlined),
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(builder: (_) => const CheckInViewScreen()),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                Card(
+                  child: ListTile(
+                    leading: const Icon(Icons.info_outline),
+                    title: const Text('No active check-in'),
+                    subtitle: const Text('Create one to get started'),
+                  ),
+                ),
+              const SizedBox(height: 12),
+              Card(
+                child: Column(
+                  children: [
+                    ListTile(
+                      leading: const Icon(Icons.add_location_alt_outlined),
+                      title: const Text('Create check-in'),
+                      onTap: () async {
+                        await Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const CheckInCreateScreen()),
+                        );
+                      },
+                    ),
+                    const Divider(height: 0),
+                    ListTile(
+                      leading: const Icon(Icons.map_outlined),
+                      title: const Text('View active check-in'),
+                      enabled: active != null,
+                      onTap: active == null
+                          ? null
+                          : () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(builder: (_) => const CheckInViewScreen()),
+                              );
+                            },
+                    ),
+                    const Divider(height: 0),
+                    ListTile(
+                      leading: const Icon(Icons.check_circle_outline),
+                      title: const Text('Check in now'),
+                      enabled: active != null,
+                      onTap: active == null
+                          ? null
+                          : () async {
+                              final result = await context.read<CheckInProvider>().attemptCheckIn();
+                              if (!context.mounted) return;
+                              await showMessageDialog(
+                                context: context,
+                                title: result.success ? 'Success' : 'Not in range',
+                                message: result.distanceMeters == null
+                                    ? result.message
+                                    : '${result.message}\nDistance: ${result.distanceMeters!.toStringAsFixed(1)} m',
+                              );
+                            },
+                    ),
+                    const Divider(height: 0),
+                    ListTile(
+                      leading: const Icon(Icons.delete_outline),
+                      title: const Text('Clear active check-in'),
+                      enabled: active != null,
+                      onTap: active == null
+                          ? null
+                          : () async {
+                              await context.read<CheckInProvider>().clearActive();
+                            },
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
       ),
+      // floatingActionButton: FloatingActionButton.extended(
+      //   icon: const Icon(Icons.add_location_alt_outlined),
+      //   label: const Text('Create check-in'),
+      //   onPressed: () async {
+      //     await Navigator.of(context).push(
+      //       MaterialPageRoute(builder: (_) => const CheckInCreateScreen()),
+      //     );
+      //   },
+      // ),
     );
   }
 }
