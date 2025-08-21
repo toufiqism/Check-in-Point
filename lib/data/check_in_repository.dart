@@ -86,6 +86,56 @@ class CheckInRepository {
       transaction.delete(_activePointDoc);
     });
   }
+
+  DocumentReference<Map<String, dynamic>> get _userCheckInDoc {
+    final User? user = _firebaseAuth.currentUser;
+    if (user == null) {
+      throw StateError('Not authenticated');
+    }
+    return _firestore.collection('checkins').doc(user.uid);
+  }
+
+  Future<void> setUserCheckedIn({required CheckInPoint point}) async {
+    final User? user = _firebaseAuth.currentUser;
+    if (user == null) {
+      throw StateError('Not authenticated');
+    }
+    final now = FieldValue.serverTimestamp();
+    await _userCheckInDoc.set({
+      'uid': user.uid,
+      'checkedIn': true,
+      'lastCheckInAt': now,
+      'updatedAt': now,
+      'point': {
+        'latitude': point.latitude,
+        'longitude': point.longitude,
+        'radiusMeters': point.radiusMeters,
+      },
+    }, SetOptions(merge: true));
+  }
+
+  Future<void> setUserCheckedOut({String reason = 'manual'}) async {
+    final User? user = _firebaseAuth.currentUser;
+    if (user == null) {
+      throw StateError('Not authenticated');
+    }
+    final now = FieldValue.serverTimestamp();
+    await _userCheckInDoc.set({
+      'uid': user.uid,
+      'checkedIn': false,
+      'lastCheckOutAt': now,
+      'updatedAt': now,
+      'reason': reason,
+    }, SetOptions(merge: true));
+  }
+
+  Stream<int> watchCheckedInCount() {
+    return _firestore
+        .collection('checkins')
+        .where('checkedIn', isEqualTo: true)
+        .snapshots()
+        .map((snap) => snap.docs.length);
+  }
 }
 
 

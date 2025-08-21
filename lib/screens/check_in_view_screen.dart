@@ -82,6 +82,20 @@ class _CheckInViewScreenState extends State<CheckInViewScreen> {
                     Text('Latitude: ${active.latitude.toStringAsFixed(6)}'),
                     Text('Longitude: ${active.longitude.toStringAsFixed(6)}'),
                     Text('Radius: ${active.radiusMeters} m'),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Icon(Icons.group_outlined, size: 18),
+                        const SizedBox(width: 6),
+                        StreamBuilder<int>(
+                          stream: context.read<CheckInProvider>().checkedInCount,
+                          builder: (context, snapshot) {
+                            final count = snapshot.data ?? 0;
+                            return Text('Checked-in now: $count');
+                          },
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: 12),
                     Row(
                       children: [

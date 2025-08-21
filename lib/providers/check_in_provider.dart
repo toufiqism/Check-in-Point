@@ -67,6 +67,8 @@ class CheckInProvider extends ChangeNotifier {
         position.longitude,
       );
       if (distance <= active.radiusMeters) {
+        // Mark user as checked in
+        await _repository.setUserCheckedIn(point: active);
         return CheckInAttemptResult.success(
           message: 'Checked in successfully.',
           distanceMeters: distance,
@@ -104,6 +106,9 @@ class CheckInProvider extends ChangeNotifier {
     _stopMonitoring();
     super.dispose();
   }
+
+  // Presence count stream
+  Stream<int> get checkedInCount => _repository.watchCheckedInCount();
 
   void _syncMonitoring({
     required CheckInPoint? previous,
@@ -157,7 +162,8 @@ class CheckInProvider extends ChangeNotifier {
     );
     if (distance > point.radiusMeters) {
       try {
-        await _repository.recordCheckoutAndClear(point: point, reason: 'auto');
+        // Auto check-out only marks presence; active point remains for others
+        await _repository.setUserCheckedOut(reason: 'auto');
       } catch (_) {}
     }
   }

@@ -90,6 +90,14 @@ Firebase will act as the backend for user authentication and data storage. The a
   - `lib/data/check_in_repository.dart`: `recordCheckoutAndClear()` writes a log entry then deletes the active point.
 - Background behavior: This implementation tracks only while the app is in foreground. For true background geofencing, consider platform-specific geofencing APIs or background services; ensure iOS background modes and Android background permissions are configured accordingly.
 
+### Real-time checked-in count
+- Model: `checkins/{uid}` document stores `{ checkedIn: bool, lastCheckInAt, lastCheckOutAt, updatedAt, point }`.
+- Counting: Stream a query `where('checkedIn', isEqualTo: true)` and use the docs length.
+- Files:
+  - `lib/data/check_in_repository.dart`: `setUserCheckedIn`, `setUserCheckedOut`, `watchCheckedInCount`.
+  - `lib/providers/check_in_provider.dart`: exposes `checkedInCount` stream and marks presence during manual/auto check-in/out.
+  - `lib/screens/home_screen.dart` and `lib/screens/check_in_view_screen.dart`: display real-time count via `StreamBuilder<int>`.
+
 ### Firestore data model and rules
 - Data path: `users/{uid}/checkins/active` (single document) with fields: `latitude` (double), `longitude` (double), `radiusMeters` (int), `active` (bool), `createdAt`, `updatedAt` (timestamps).
 - Suggested Firestore rules (tighten as needed):

@@ -45,8 +45,21 @@ class HomeScreen extends StatelessWidget {
                   child: ListTile(
                     leading: const Icon(Icons.my_location_outlined),
                     title: const Text('Active check-in'),
-                    subtitle: Text(
-                        'Lat: ${active.latitude.toStringAsFixed(5)}, Lng: ${active.longitude.toStringAsFixed(5)}\nRadius: ${active.radiusMeters} m'),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Lat: ${active.latitude.toStringAsFixed(5)}, Lng: ${active.longitude.toStringAsFixed(5)}'),
+                        Text('Radius: ${active.radiusMeters} m'),
+                        const SizedBox(height: 4),
+                        StreamBuilder<int>(
+                          stream: context.read<CheckInProvider>().checkedInCount,
+                          builder: (context, snapshot) {
+                            final count = snapshot.data ?? 0;
+                            return Text('Checked-in now: $count');
+                          },
+                        ),
+                      ],
+                    ),
                     isThreeLine: true,
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
