@@ -124,8 +124,31 @@ Firebase will act as the backend for user authentication and data storage. The a
 - Proper form validation and loading states
 
 ### Architecture
-- SOLID-friendly separation: UI → Provider → Repository → Firebase SDK
-- `provider` ensures existing features are unaffected and state is predictable
+- Pattern: Layered, SOLID-aligned: Presentation → State → Data → Firebase SDK
+- Presentation: `lib/screens/*` for UI widgets; no business logic.
+- State management: `lib/providers/*` use `ChangeNotifier`; handle user intents, orchestrate side-effects, expose immutable state/streams to UI.
+- Data layer: `lib/data/*` repositories abstract Firebase (`Auth`, `Firestore`) behind clean interfaces.
+- Domain models: `lib/models/*` plain Dart value objects used across layers.
+- Utilities: `lib/utils/*` platform helpers (location, dialogs); no app state.
+- Unidirectional flow: UI → Provider → Repository → Firebase → Provider (streams) → UI.
+- Testability: providers and repositories are injectable; external SDKs isolated in the data layer.
+
+### Git Flow
+- Base branches (from `.git/config`):
+  - `prod` (production, GitFlow master)
+  - `dev` (integration, GitFlow develop)
+- Branch prefixes: `feature/`, `release/`, `hotfix/` (GitFlow); version tags use `V_` prefix (e.g., `V_1.2.3`).
+- Workflow:
+  1. Create an issue/task.
+  2. Branch from `dev`: `feature/<short-scope>` (e.g., `feature/check_in_implementation`).
+  3. Commit with Conventional Commits (`feat:`, `fix:`, `refactor:`, `docs:`, `chore:`).
+  4. Open PR into `dev`; require review and green checks.
+  5. Squash-merge into `dev`.
+  6. Release: cut `release/x.y.z` from `dev`; only stabilization.
+  7. Finalize: merge `release/x.y.z` to `prod` and back-merge to `dev`; tag `V_X.Y.Z`.
+  8. Hotfix: branch `hotfix/x.y.z` from `prod`; after fix, merge to `prod` and `dev`; tag `V_X.Y.Z`.
+- Note: A `main` branch exists remotely, but GitFlow production is `prod`. New work should target `dev` unless otherwise specified.
+- Versioning: Semantic Versioning (MAJOR.MINOR.PATCH) with `V_` tag prefix.
 
 ### Compatibility notes
 - Packages used (`google_maps_flutter`, `cloud_firestore`, `firebase_core`, `firebase_auth`, `geolocator`, `provider`) are supported on both Android and iOS. For iOS, ensure CocoaPods is set up and Xcode 15+.
