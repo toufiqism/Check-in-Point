@@ -62,6 +62,30 @@ class CheckInRepository {
     }
     return _activePointDoc.snapshots().map((doc) => CheckInPoint.fromDoc(doc));
   }
+
+  Future<void> recordCheckoutAndClear({
+    required CheckInPoint point,
+    String reason = 'auto',
+  }) async {
+    final User? user = _firebaseAuth.currentUser;
+    if (user == null) {
+      throw StateError('Not authenticated');
+    }
+    final CollectionReference<Map<String, dynamic>> logs =
+        _firestore.collection('checkin_logs');
+    final now = FieldValue.serverTimestamp();
+    await _firestore.runTransaction((transaction) async {
+      transaction.set(logs.doc(), {
+        'uid': user.uid,
+        'latitude': point.latitude,
+        'longitude': point.longitude,
+        'radiusMeters': point.radiusMeters,
+        'checkedOutAt': now,
+        'reason': reason,
+      });
+      transaction.delete(_activePointDoc);
+    });
+  }
 }
 
 

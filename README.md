@@ -81,6 +81,15 @@ Firebase will act as the backend for user authentication and data storage. The a
 - iOS notes: Ensure location usage description string is present (above). If testing on Simulator, provide a custom location in Features → Location.
 - Android notes: Runtime permissions are requested automatically on first use via `geolocator`.
 
+### Auto check-out (leave radius)
+- Continuous monitoring: When an active check-in exists, the app subscribes to `Geolocator.getPositionStream()`.
+- Logic: On each update, compute distance to the active point. If distance exceeds the radius, the app records a checkout and clears the active point.
+- Data: Checkout logs written to `checkin_logs` collection with `uid`, `latitude`, `longitude`, `radiusMeters`, `checkedOutAt`, and `reason`.
+- Files:
+  - `lib/providers/check_in_provider.dart`: Start/stop monitoring tied to active point; auto-checkout when out of range.
+  - `lib/data/check_in_repository.dart`: `recordCheckoutAndClear()` writes a log entry then deletes the active point.
+- Background behavior: This implementation tracks only while the app is in foreground. For true background geofencing, consider platform-specific geofencing APIs or background services; ensure iOS background modes and Android background permissions are configured accordingly.
+
 ### Firestore data model and rules
 - Data path: `users/{uid}/checkins/active` (single document) with fields: `latitude` (double), `longitude` (double), `radiusMeters` (int), `active` (bool), `createdAt`, `updatedAt` (timestamps).
 - Suggested Firestore rules (tighten as needed):

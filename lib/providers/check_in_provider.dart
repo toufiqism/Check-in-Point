@@ -10,13 +10,16 @@ class CheckInProvider extends ChangeNotifier {
   CheckInProvider({required CheckInRepository repository})
       : _repository = repository {
     _subscription = _repository.watchActivePoint().listen((event) {
+      final previous = _activePoint;
       _activePoint = event;
+      _syncMonitoring(previous: previous, current: _activePoint);
       notifyListeners();
     });
   }
 
   final CheckInRepository _repository;
   late final StreamSubscription<CheckInPoint?> _subscription;
+  StreamSubscription<Position>? _positionSubscription;
 
   CheckInPoint? _activePoint;
   CheckInPoint? get activePoint => _activePoint;
@@ -98,7 +101,65 @@ class CheckInProvider extends ChangeNotifier {
   @override
   void dispose() {
     _subscription.cancel();
+    _stopMonitoring();
     super.dispose();
+  }
+
+  void _syncMonitoring({
+    required CheckInPoint? previous,
+    required CheckInPoint? current,
+  }) {
+    if (current == null) {
+      _stopMonitoring();
+      return;
+    }
+    if (previous == null) {
+      _startMonitoring();
+      return;
+    }
+    if (previous.latitude != current.latitude ||
+        previous.longitude != current.longitude ||
+        previous.radiusMeters != current.radiusMeters) {
+      _restartMonitoring();
+    }
+  }
+
+  void _startMonitoring() {
+    if (_positionSubscription != null) return;
+    _positionSubscription = Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.best,
+        distanceFilter: 5,
+      ),
+    ).listen(_onPositionUpdate, onError: (Object e, StackTrace s) {
+      // ignore continuous stream errors
+    });
+  }
+
+  void _restartMonitoring() {
+    _stopMonitoring();
+    _startMonitoring();
+  }
+
+  void _stopMonitoring() {
+    _positionSubscription?.cancel();
+    _positionSubscription = null;
+  }
+
+  Future<void> _onPositionUpdate(Position position) async {
+    final CheckInPoint? point = _activePoint;
+    if (point == null) return;
+    final double distance = Geolocator.distanceBetween(
+      point.latitude,
+      point.longitude,
+      position.latitude,
+      position.longitude,
+    );
+    if (distance > point.radiusMeters) {
+      try {
+        await _repository.recordCheckoutAndClear(point: point, reason: 'auto');
+      } catch (_) {}
+    }
   }
 }
 
