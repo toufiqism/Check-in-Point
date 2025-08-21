@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/check_in_point.iml" filepath="$PROJECT_DIR$/check_in_point.iml" />
+      <module fileurl="file://$PROJECT_DIR$/android/check_in_point_android.iml" filepath="$PROJECT_DIR$/android/check_in_point_android.iml" />
     </modules>
   </component>
 </project>

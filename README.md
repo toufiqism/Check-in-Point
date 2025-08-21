@@ -70,6 +70,17 @@ Firebase will act as the backend for user authentication and data storage. The a
   <string>Your location is used to create check-in points.</string>
   ```
 
+### Check-in nearby
+- Flow: When a user taps "Check in" the app fetches current GPS via `geolocator`, computes distance to the active point using `Geolocator.distanceBetween`, and compares with the configured radius.
+- Success: Shows a success dialog if within radius; otherwise shows "Not in range" with distance in meters.
+- Files:
+  - `lib/providers/check_in_provider.dart`: `attemptCheckIn()` performs permission checks, gets current position, and calculates distance.
+  - `lib/utils/location_helper.dart`: Centralized permission handling and current position retrieval.
+  - `lib/screens/home_screen.dart`: Adds "Check in now" actions in the card and list.
+  - `lib/screens/check_in_view_screen.dart`: Adds "Check in" button below the map.
+- iOS notes: Ensure location usage description string is present (above). If testing on Simulator, provide a custom location in Features → Location.
+- Android notes: Runtime permissions are requested automatically on first use via `geolocator`.
+
 ### Firestore data model and rules
 - Data path: `users/{uid}/checkins/active` (single document) with fields: `latitude` (double), `longitude` (double), `radiusMeters` (int), `active` (bool), `createdAt`, `updatedAt` (timestamps).
 - Suggested Firestore rules (tighten as needed):

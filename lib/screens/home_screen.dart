@@ -5,6 +5,7 @@ import 'package:check_in_point/screens/check_in_create_screen.dart';
 import 'package:check_in_point/screens/check_in_view_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:check_in_point/providers/check_in_provider.dart';
+import 'package:check_in_point/utils/dialogs.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -47,14 +48,34 @@ class HomeScreen extends StatelessWidget {
                     subtitle: Text(
                         'Lat: ${active.latitude.toStringAsFixed(5)}, Lng: ${active.longitude.toStringAsFixed(5)}\nRadius: ${active.radiusMeters} m'),
                     isThreeLine: true,
-                    trailing: IconButton(
-                      tooltip: 'View',
-                      icon: const Icon(Icons.map_outlined),
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const CheckInViewScreen()),
-                        );
-                      },
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          tooltip: 'Check in',
+                          icon: const Icon(Icons.check_circle_outline),
+                          onPressed: () async {
+                            final result = await context.read<CheckInProvider>().attemptCheckIn();
+                            if (!context.mounted) return;
+                            await showMessageDialog(
+                              context: context,
+                              title: result.success ? 'Success' : 'Not in range',
+                              message: result.distanceMeters == null
+                                  ? result.message
+                                  : '${result.message}\nDistance: ${result.distanceMeters!.toStringAsFixed(1)} m',
+                            );
+                          },
+                        ),
+                        IconButton(
+                          tooltip: 'View',
+                          icon: const Icon(Icons.map_outlined),
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(builder: (_) => const CheckInViewScreen()),
+                            );
+                          },
+                        ),
+                      ],
                     ),
                   ),
                 )
@@ -89,6 +110,25 @@ class HomeScreen extends StatelessWidget {
                           : () {
                               Navigator.of(context).push(
                                 MaterialPageRoute(builder: (_) => const CheckInViewScreen()),
+                              );
+                            },
+                    ),
+                    const Divider(height: 0),
+                    ListTile(
+                      leading: const Icon(Icons.check_circle_outline),
+                      title: const Text('Check in now'),
+                      enabled: active != null,
+                      onTap: active == null
+                          ? null
+                          : () async {
+                              final result = await context.read<CheckInProvider>().attemptCheckIn();
+                              if (!context.mounted) return;
+                              await showMessageDialog(
+                                context: context,
+                                title: result.success ? 'Success' : 'Not in range',
+                                message: result.distanceMeters == null
+                                    ? result.message
+                                    : '${result.message}\nDistance: ${result.distanceMeters!.toStringAsFixed(1)} m',
                               );
                             },
                     ),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:check_in_point/providers/check_in_provider.dart';
+import 'package:check_in_point/utils/dialogs.dart';
 
 class CheckInViewScreen extends StatefulWidget {
   const CheckInViewScreen({super.key});
@@ -89,6 +90,24 @@ class _CheckInViewScreenState extends State<CheckInViewScreen> {
                             onPressed: () => Navigator.of(context).pop(),
                             icon: const Icon(Icons.close),
                             label: const Text('Close'),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () async {
+                              final result = await context.read<CheckInProvider>().attemptCheckIn();
+                              if (!mounted) return;
+                              await showMessageDialog(
+                                context: context,
+                                title: result.success ? 'Success' : 'Not in range',
+                                message: result.distanceMeters == null
+                                    ? result.message
+                                    : '${result.message}\nDistance: ${result.distanceMeters!.toStringAsFixed(1)} m',
+                              );
+                            },
+                            icon: const Icon(Icons.check_circle_outline),
+                            label: const Text('Check in'),
                           ),
                         ),
                         const SizedBox(width: 12),
