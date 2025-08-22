@@ -152,3 +152,35 @@ Firebase will act as the backend for user authentication and data storage. The a
 
 ### Compatibility notes
 - Packages used (`google_maps_flutter`, `cloud_firestore`, `firebase_core`, `firebase_auth`, `geolocator`, `provider`) are supported on both Android and iOS. For iOS, ensure CocoaPods is set up and Xcode 15+.
+
+## Testing
+
+### Auth unit tests
+
+Focused unit tests cover the authentication layer without hitting real Firebase services.
+
+- Location: `test/auth/`
+  - `auth_repository_test.dart`: repository delegation and behavior
+  - `auth_provider_test.dart`: provider state, loading flags, error mapping, and calls
+
+### How to run tests
+
+1. Install dependencies:
+
+   ```bash
+   flutter pub get
+   ```
+
+2. Run the full test suite:
+
+   ```bash
+   flutter test
+   ```
+
+### Test dependencies
+
+- `mocktail` is used for mocking. It is dev-only and does not affect Android/iOS runtime.
+
+### Notes
+
+- The default counter widget test was replaced with a minimal placeholder to keep tests independent of runtime Firebase initialization. No app UI/behavior changes were made.
