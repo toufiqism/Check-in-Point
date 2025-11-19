@@ -32,6 +32,8 @@ Firebase will act as the backend for user authentication and data storage. The a
    flutter run
    ```
 
+
+
 ### Using auth
 - Enable Email/Password provider in Firebase Authentication console.
 - To register: From the login screen, tap "Don't have an account? Create one" and fill name, email, password.
