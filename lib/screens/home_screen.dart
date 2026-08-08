@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:check_in_point/providers/auth_provider.dart';
 import 'package:check_in_point/screens/check_in_create_screen.dart';
 import 'package:check_in_point/screens/check_in_view_screen.dart';
-import 'package:provider/provider.dart';
 import 'package:check_in_point/providers/check_in_provider.dart';
 import 'package:check_in_point/utils/dialogs.dart';
 

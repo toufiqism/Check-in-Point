@@ -85,11 +85,11 @@ Firebase will act as the backend for user authentication and data storage. The a
 
 ### Auto check-out (leave radius)
 - Continuous monitoring: When an active check-in exists, the app subscribes to `Geolocator.getPositionStream()`.
-- Logic: On each update, compute distance to the active point. If distance exceeds the radius, the app records a checkout and clears the active point.
-- Data: Checkout logs written to `checkin_logs` collection with `uid`, `latitude`, `longitude`, `radiusMeters`, `checkedOutAt`, and `reason`.
+- Logic: On each update, compute distance to the active point. If distance exceeds the radius, the app marks the current user as checked out. The active point itself is left in place so it remains available to other users.
+- Data: `checkins/{uid}` is updated with `checkedIn: false`, `lastCheckOutAt`, and `reason: 'auto'`.
 - Files:
   - `lib/providers/check_in_provider.dart`: Start/stop monitoring tied to active point; auto-checkout when out of range.
-  - `lib/data/check_in_repository.dart`: `recordCheckoutAndClear()` writes a log entry then deletes the active point.
+  - `lib/data/check_in_repository.dart`: `setUserCheckedOut()` updates the user's presence document.
 - Background behavior: This implementation tracks only while the app is in foreground. For true background geofencing, consider platform-specific geofencing APIs or background services; ensure iOS background modes and Android background permissions are configured accordingly.
 
 ### Real-time checked-in count
@@ -101,14 +101,21 @@ Firebase will act as the backend for user authentication and data storage. The a
   - `lib/screens/home_screen.dart` and `lib/screens/check_in_view_screen.dart`: display real-time count via `StreamBuilder<int>`.
 
 ### Firestore data model and rules
-- Data path: `users/{uid}/checkins/active` (single document) with fields: `latitude` (double), `longitude` (double), `radiusMeters` (int), `active` (bool), `createdAt`, `updatedAt` (timestamps).
+- Active point: `checkin_point/active` (a single app-wide document) with fields: `latitude` (double), `longitude` (double), `radiusMeters` (int), `active` (bool), `createdAt`, `updatedAt` (timestamps).
+- Presence: `checkins/{uid}` (one document per user) with fields: `uid`, `checkedIn` (bool), `lastCheckInAt`, `lastCheckOutAt`, `updatedAt`, `reason`, `point`.
 - Suggested Firestore rules (tighten as needed):
   ```
   rules_version = '2';
   service cloud.firestore {
     match /databases/{database}/documents {
-      match /users/{uid}/checkins/active {
-        allow read, write: if request.auth != null && request.auth.uid == uid;
+      // Shared by every signed-in user; restrict writes further if only
+      // certain accounts should be able to move or clear the point.
+      match /checkin_point/active {
+        allow read, write: if request.auth != null;
+      }
+      match /checkins/{uid} {
+        allow read: if request.auth != null;
+        allow write: if request.auth != null && request.auth.uid == uid;
       }
     }
   }

@@ -16,7 +16,9 @@ class LocationHelper {
     if (permission == LocationPermission.deniedForever) {
       throw StateError('Location permission permanently denied.');
     }
-    return Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.best);
+    return Geolocator.getCurrentPosition(
+      locationSettings: const LocationSettings(accuracy: LocationAccuracy.best),
+    );
   }
 }
 

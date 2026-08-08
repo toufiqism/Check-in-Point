@@ -35,24 +35,22 @@ class AppRoot extends StatelessWidget {
           ),
         ),
       ],
-      child: SafeArea(
-        child: MaterialApp(
-          debugShowCheckedModeBanner: false,
-          title: 'Check-in Point',
-          theme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-            inputDecorationTheme: const InputDecorationTheme(
-              border: OutlineInputBorder(),
-            ),
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'Check-in Point',
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+          inputDecorationTheme: const InputDecorationTheme(
+            border: OutlineInputBorder(),
           ),
-          home: Consumer<AuthProvider>(
-            builder: (context, authProvider, _) {
-              if (authProvider.isAuthenticated) {
-                return const HomeScreen();
-              }
-              return const LoginScreen();
-            },
-          ),
+        ),
+        home: Consumer<AuthProvider>(
+          builder: (context, authProvider, _) {
+            if (authProvider.isAuthenticated) {
+              return const HomeScreen();
+            }
+            return const LoginScreen();
+          },
         ),
       ),
     );

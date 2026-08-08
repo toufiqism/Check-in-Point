@@ -72,73 +72,76 @@ class _CheckInViewScreenState extends State<CheckInViewScreen> {
                   },
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text('Details', style: theme.textTheme.titleMedium),
-                    const SizedBox(height: 8),
-                    Text('Latitude: ${active.latitude.toStringAsFixed(6)}'),
-                    Text('Longitude: ${active.longitude.toStringAsFixed(6)}'),
-                    Text('Radius: ${active.radiusMeters} m'),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        const Icon(Icons.group_outlined, size: 18),
-                        const SizedBox(width: 6),
-                        StreamBuilder<int>(
-                          stream: context.read<CheckInProvider>().checkedInCount,
-                          builder: (context, snapshot) {
-                            final count = snapshot.data ?? 0;
-                            return Text('Checked-in now: $count');
-                          },
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: () => Navigator.of(context).pop(),
-                            icon: const Icon(Icons.close),
-                            label: const Text('Close'),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: () async {
-                              final result = await context.read<CheckInProvider>().attemptCheckIn();
-                              if (!mounted) return;
-                              await showMessageDialog(
-                                context: context,
-                                title: result.success ? 'Success' : 'Not in range',
-                                message: result.distanceMeters == null
-                                    ? result.message
-                                    : '${result.message}\nDistance: ${result.distanceMeters!.toStringAsFixed(1)} m',
-                              );
+              SafeArea(
+                top: false,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text('Details', style: theme.textTheme.titleMedium),
+                      const SizedBox(height: 8),
+                      Text('Latitude: ${active.latitude.toStringAsFixed(6)}'),
+                      Text('Longitude: ${active.longitude.toStringAsFixed(6)}'),
+                      Text('Radius: ${active.radiusMeters} m'),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          const Icon(Icons.group_outlined, size: 18),
+                          const SizedBox(width: 6),
+                          StreamBuilder<int>(
+                            stream: context.read<CheckInProvider>().checkedInCount,
+                            builder: (context, snapshot) {
+                              final count = snapshot.data ?? 0;
+                              return Text('Checked-in now: $count');
                             },
-                            icon: const Icon(Icons.check_circle_outline),
-                            label: const Text('Check in'),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: () async {
-                              await provider.clearActive();
-                              if (!mounted) return;
-                              Navigator.of(context).maybePop();
-                            },
-                            icon: const Icon(Icons.delete_outline),
-                            label: const Text('Clear'),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () => Navigator.of(context).pop(),
+                              icon: const Icon(Icons.close),
+                              label: const Text('Close'),
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: () async {
+                                final result = await context.read<CheckInProvider>().attemptCheckIn();
+                                if (!mounted) return;
+                                await showMessageDialog(
+                                  context: context,
+                                  title: result.success ? 'Success' : 'Not in range',
+                                  message: result.distanceMeters == null
+                                      ? result.message
+                                      : '${result.message}\nDistance: ${result.distanceMeters!.toStringAsFixed(1)} m',
+                                );
+                              },
+                              icon: const Icon(Icons.check_circle_outline),
+                              label: const Text('Check in'),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: () async {
+                                await provider.clearActive();
+                                if (!mounted) return;
+                                Navigator.of(context).maybePop();
+                              },
+                              icon: const Icon(Icons.delete_outline),
+                              label: const Text('Clear'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],

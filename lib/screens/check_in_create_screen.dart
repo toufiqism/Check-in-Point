@@ -118,43 +118,46 @@ class _CheckInCreateScreenState extends State<CheckInCreateScreen> {
                     },
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text('Radius: ${_radiusMeters.round()} m'),
-                          TextButton(
-                            onPressed: () => setState(() => _radiusMeters = 100),
-                            child: const Text('Reset'),
-                          ),
-                        ],
-                      ),
-                      Slider(
-                        min: 25,
-                        max: 2000,
-                        divisions: 79,
-                        value: _radiusMeters,
-                        label: '${_radiusMeters.round()} m',
-                        onChanged: (v) => setState(() => _radiusMeters = v),
-                      ),
-                      const SizedBox(height: 8),
-                      Consumer<CheckInProvider>(
-                        builder: (context, p, _) => SizedBox(
-                          height: 48,
-                          child: ElevatedButton.icon(
-                            onPressed: p.isSaving ? null : _save,
-                            icon: p.isSaving
-                                ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                                : const Icon(Icons.save_outlined),
-                            label: Text(p.isSaving ? 'Saving...' : 'Save Check-in'),
+                SafeArea(
+                  top: false,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('Radius: ${_radiusMeters.round()} m'),
+                            TextButton(
+                              onPressed: () => setState(() => _radiusMeters = 100),
+                              child: const Text('Reset'),
+                            ),
+                          ],
+                        ),
+                        Slider(
+                          min: 25,
+                          max: 2000,
+                          divisions: 79,
+                          value: _radiusMeters,
+                          label: '${_radiusMeters.round()} m',
+                          onChanged: (v) => setState(() => _radiusMeters = v),
+                        ),
+                        const SizedBox(height: 8),
+                        Consumer<CheckInProvider>(
+                          builder: (context, p, _) => SizedBox(
+                            height: 48,
+                            child: ElevatedButton.icon(
+                              onPressed: p.isSaving ? null : _save,
+                              icon: p.isSaving
+                                  ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                                  : const Icon(Icons.save_outlined),
+                              label: Text(p.isSaving ? 'Saving...' : 'Save Check-in'),
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ],
