@@ -53,6 +53,9 @@ class HomeScreen extends StatelessWidget {
                         StreamBuilder<int>(
                           stream: context.read<CheckInProvider>().checkedInCount,
                           builder: (context, snapshot) {
+                            if (snapshot.hasError) {
+                              return const Text('Checked-in now: unavailable');
+                            }
                             final count = snapshot.data ?? 0;
                             return Text('Checked-in now: $count');
                           },
@@ -152,7 +155,15 @@ class HomeScreen extends StatelessWidget {
                       onTap: active == null
                           ? null
                           : () async {
-                              await context.read<CheckInProvider>().clearActive();
+                              final provider = context.read<CheckInProvider>();
+                              final ok = await provider.clearActive();
+                              if (!context.mounted || ok) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(provider.error ??
+                                      'Failed to clear the check-in point.'),
+                                ),
+                              );
                             },
                     ),
                   ],

@@ -84,25 +84,25 @@ Firebase will act as the backend for user authentication and data storage. The a
 - Android notes: Runtime permissions are requested automatically on first use via `geolocator`.
 
 ### Auto check-out (leave radius)
-- Continuous monitoring: When an active check-in exists, the app subscribes to `Geolocator.getPositionStream()`.
+- Continuous monitoring: The app subscribes to `Geolocator.getPositionStream()` only while the signed-in user is actually checked into the active point. A user who has not checked in is never tracked, and monitoring stops as soon as they are checked out.
 - Logic: On each update, compute distance to the active point. If distance exceeds the radius, the app marks the current user as checked out. The active point itself is left in place so it remains available to other users.
 - Data: `checkins/{uid}` is updated with `checkedIn: false`, `lastCheckOutAt`, and `reason: 'auto'`.
 - Files:
-  - `lib/providers/check_in_provider.dart`: Start/stop monitoring tied to active point; auto-checkout when out of range.
+  - `lib/providers/check_in_provider.dart`: Start/stop monitoring tied to the user's own check-in state; auto-checkout when out of range.
   - `lib/data/check_in_repository.dart`: `setUserCheckedOut()` updates the user's presence document.
 - Background behavior: This implementation tracks only while the app is in foreground. For true background geofencing, consider platform-specific geofencing APIs or background services; ensure iOS background modes and Android background permissions are configured accordingly.
 
 ### Real-time checked-in count
-- Model: `checkins/{uid}` document stores `{ checkedIn: bool, lastCheckInAt, lastCheckOutAt, updatedAt, point }`.
-- Counting: Stream a query `where('checkedIn', isEqualTo: true)` and use the docs length.
+- Model: `checkins/{uid}` document stores `{ checkedIn: bool, pointId, lastCheckInAt, lastCheckOutAt, updatedAt, reason, point }`.
+- Counting: Stream a query `where('checkedIn', isEqualTo: true).where('pointId', isEqualTo: <active point id>)` and use the docs length. Scoping by `pointId` is what keeps check-ins made against an earlier placement of the point out of the current count, since a client cannot reset other users' documents. If Firestore rejects the query with a `FAILED_PRECONDITION` error, follow the index-creation link in the error message to add the composite index for `checkedIn` + `pointId`; the count reads "unavailable" while the query is failing rather than showing a misleading zero.
 - Files:
   - `lib/data/check_in_repository.dart`: `setUserCheckedIn`, `setUserCheckedOut`, `watchCheckedInCount`.
-  - `lib/providers/check_in_provider.dart`: exposes `checkedInCount` stream and marks presence during manual/auto check-in/out.
+  - `lib/providers/check_in_provider.dart`: caches one `checkedInCount` stream per active point so widget rebuilds do not resubscribe, and marks presence during manual/auto check-in/out.
   - `lib/screens/home_screen.dart` and `lib/screens/check_in_view_screen.dart`: display real-time count via `StreamBuilder<int>`.
 
 ### Firestore data model and rules
-- Active point: `checkin_point/active` (a single app-wide document) with fields: `latitude` (double), `longitude` (double), `radiusMeters` (int), `active` (bool), `createdAt`, `updatedAt` (timestamps).
-- Presence: `checkins/{uid}` (one document per user) with fields: `uid`, `checkedIn` (bool), `lastCheckInAt`, `lastCheckOutAt`, `updatedAt`, `reason`, `point`.
+- Active point: `checkin_point/active` (a single app-wide document) with fields: `pointId` (string), `latitude` (double), `longitude` (double), `radiusMeters` (int), `active` (bool), `createdAt`, `updatedAt` (timestamps). Saving the point mints a new `pointId`, which invalidates check-ins made against its previous placement. Documents written before `pointId` existed fall back to the document id when read.
+- Presence: `checkins/{uid}` (one document per user) with fields: `uid`, `checkedIn` (bool), `pointId` (string), `lastCheckInAt`, `lastCheckOutAt`, `updatedAt`, `reason`, `point`.
 - Suggested Firestore rules (tighten as needed):
   ```
   rules_version = '2';

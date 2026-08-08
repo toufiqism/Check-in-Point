@@ -92,6 +92,9 @@ class _CheckInViewScreenState extends State<CheckInViewScreen> {
                           StreamBuilder<int>(
                             stream: context.read<CheckInProvider>().checkedInCount,
                             builder: (context, snapshot) {
+                              if (snapshot.hasError) {
+                                return const Text('Checked-in now: unavailable');
+                              }
                               final count = snapshot.data ?? 0;
                               return Text('Checked-in now: $count');
                             },
@@ -130,9 +133,21 @@ class _CheckInViewScreenState extends State<CheckInViewScreen> {
                           Expanded(
                             child: ElevatedButton.icon(
                               onPressed: () async {
-                                await provider.clearActive();
+                                final messenger =
+                                    ScaffoldMessenger.of(context);
+                                final navigator = Navigator.of(context);
+                                final ok = await provider.clearActive();
                                 if (!mounted) return;
-                                Navigator.of(context).maybePop();
+                                if (ok) {
+                                  navigator.maybePop();
+                                  return;
+                                }
+                                messenger.showSnackBar(
+                                  SnackBar(
+                                    content: Text(provider.error ??
+                                        'Failed to clear the check-in point.'),
+                                  ),
+                                );
                               },
                               icon: const Icon(Icons.delete_outline),
                               label: const Text('Clear'),

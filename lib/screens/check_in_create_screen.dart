@@ -86,7 +86,17 @@ class _CheckInCreateScreenState extends State<CheckInCreateScreen> {
           IconButton(
             icon: const Icon(Icons.delete_outline),
             tooltip: 'Clear active',
-            onPressed: () => context.read<CheckInProvider>().clearActive(),
+            onPressed: () async {
+              final provider = context.read<CheckInProvider>();
+              final ok = await provider.clearActive();
+              if (!mounted || ok) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                      provider.error ?? 'Failed to clear the check-in point.'),
+                ),
+              );
+            },
           )
         ],
       ),
